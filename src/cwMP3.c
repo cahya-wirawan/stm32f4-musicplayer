@@ -1,6 +1,6 @@
 //
 //  cwMP3.c
-//  
+//  The code is based on http://vedder.se/2012/12/stm32f4-discovery-usb-host-and-mp3-player/
 
 #include "string.h"
 #include "cwMP3.h"
@@ -15,27 +15,27 @@
 MP3FrameInfo			mp3FrameInfo;
 HMP3Decoder				hMP3Decoder;
 
-extern FIL file;
-extern char file_read_buffer[FILE_READ_BUFFER_SIZE];
-extern volatile int bytes_left;
-extern char *read_ptr;
+extern FIL cwSFFile;
+extern char cwSFFileReadBuffer[CW_FS_FILE_READ_BUFFER_SIZE];
+extern volatile int cwSFBytesLeft;
+extern char *cwSFReadPtr;
 
 void cwMP3PlayFile(char* filename) {
   unsigned int br, btr;
   FRESULT res;
   
-  bytes_left = FILE_READ_BUFFER_SIZE;
-  read_ptr = file_read_buffer;
+  cwSFBytesLeft = CW_FS_FILE_READ_BUFFER_SIZE;
+  cwSFReadPtr = cwSFFileReadBuffer;
   
-  if (FR_OK == f_open(&file, filename, FA_OPEN_EXISTING | FA_READ)) {
+  if (FR_OK == f_open(&cwSFFile, filename, FA_OPEN_EXISTING | FA_READ)) {
 
     // Read ID3v2 Tag
     char szArtist[120];
     char szTitle[120];
-    Mp3ReadId3V2Tag(&file, szArtist, sizeof(szArtist), szTitle, sizeof(szTitle));
+    Mp3ReadId3V2Tag(&cwSFFile, szArtist, sizeof(szArtist), szTitle, sizeof(szTitle));
     
     // Fill buffer
-    res = f_read(&file, file_read_buffer, FILE_READ_BUFFER_SIZE, &br);
+    res = f_read(&cwSFFile, cwSFFileReadBuffer, CW_FS_FILE_READ_BUFFER_SIZE, &br);
     
     // Play mp3
     hMP3Decoder = MP3InitDecoder();
@@ -47,25 +47,25 @@ void cwMP3PlayFile(char* filename) {
       /*
        * If past half of buffer, refill...
        *
-       * When bytes_left changes, the audio callback has just been executed. This
+       * When cwSFBytesLeft changes, the audio callback has just been executed. This
        * means that there should be enough time to copy the end of the buffer
        * to the beginning and update the pointer before the next audio callback.
        * Getting audio callbacks while the next part of the file is read from the
        * file system should not cause problems.
        */
-      if (bytes_left < (FILE_READ_BUFFER_SIZE / 2)) {
+      if (cwSFBytesLeft < (CW_FS_FILE_READ_BUFFER_SIZE / 2)) {
         // Copy rest of data to beginning of read buffer
-        memcpy(file_read_buffer, read_ptr, bytes_left);
+        memcpy(cwSFFileReadBuffer, cwSFReadPtr, cwSFBytesLeft);
         
         // Update read pointer for audio sampling
-        read_ptr = file_read_buffer;
+        cwSFReadPtr = cwSFFileReadBuffer;
         
         // Read next part of file
-        btr = FILE_READ_BUFFER_SIZE - bytes_left;
-        res = f_read(&file, file_read_buffer + bytes_left, btr, &br);
+        btr = CW_FS_FILE_READ_BUFFER_SIZE - cwSFBytesLeft;
+        res = f_read(&cwSFFile, cwSFFileReadBuffer + cwSFBytesLeft, btr, &br);
         
         // Update the bytes left variable
-        bytes_left = FILE_READ_BUFFER_SIZE;
+        cwSFBytesLeft = CW_FS_FILE_READ_BUFFER_SIZE;
         
         // Out of data or error or user button... Stop playback!
         if (br < btr || res != FR_OK || TM_DISCO_ButtonPressed()) {
@@ -76,7 +76,7 @@ void cwMP3PlayFile(char* filename) {
           SetAudioVolume(0);
           
           // Close currently open file
-          f_close(&file);
+          f_close(&cwSFFile);
           
           // Wait for user button release
           while(TM_DISCO_ButtonPressed()){};
@@ -113,11 +113,11 @@ void AudioCallback(void *context, int buffer) {
     GPIO_ResetBits(GPIOD, GPIO_Pin_13);
   }
   
-  offset = MP3FindSyncWord((unsigned char*)read_ptr, bytes_left);
-  bytes_left -= offset;
-  read_ptr += offset;
+  offset = MP3FindSyncWord((unsigned char*)cwSFReadPtr, cwSFBytesLeft);
+  cwSFBytesLeft -= offset;
+  cwSFReadPtr += offset;
   
-  err = MP3Decode(hMP3Decoder, (unsigned char**)&read_ptr, (int*)&bytes_left, samples, 0);
+  err = MP3Decode(hMP3Decoder, (unsigned char**)&cwSFReadPtr, (int*)&cwSFBytesLeft, samples, 0);
   
   if (err) {
     /* error occurred */

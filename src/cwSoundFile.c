@@ -12,10 +12,10 @@
 #include "tm_stm32f4_fatfs.h"
 #include "tm_stm32f4_usb_msc_host.h"
 
-FIL file;
-char file_read_buffer[FILE_READ_BUFFER_SIZE];
-volatile int bytes_left;
-char *read_ptr;
+FIL cwSFFile;
+char cwSFFileReadBuffer[CW_FS_FILE_READ_BUFFER_SIZE];
+volatile int cwSFBytesLeft;
+char *cwSFReadPtr;
 
 const char *cwSFGetFilenameExt(const char *filename) {
   const char *dot = strrchr(filename, '.');
