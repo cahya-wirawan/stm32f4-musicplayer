@@ -12,8 +12,8 @@
 #define f_tell(fp)		((fp)->fptr)
 
 // MP3 Variables
-MP3FrameInfo			mp3FrameInfo;
-HMP3Decoder				hMP3Decoder;
+MP3FrameInfo mp3FrameInfo;
+HMP3Decoder hMP3Decoder;
 
 extern FIL cwSFFile;
 extern char cwSFFileReadBuffer[CW_FS_FILE_READ_BUFFER_SIZE];

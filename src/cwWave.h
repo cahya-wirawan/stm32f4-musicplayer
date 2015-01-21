@@ -12,7 +12,7 @@
 #include "Audio.h"
 #include "ff.h"
 
-void AudioCallback(void *context,int buffer);
+void cwWaveAudioCallback(void *context,int buffer);
 void cwWavePlayFile(char* filename);
 
 #endif /* defined(__CW_WAVE__) */

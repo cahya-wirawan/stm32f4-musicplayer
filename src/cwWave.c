@@ -5,6 +5,7 @@
 #include "string.h"
 #include "Audio.h"
 #include "cwSoundFile.h"
+#include "cwWave.h"
 #include "tm_stm32f4_disco.h"
 
 #define f_tell(fp)		((fp)->fptr)
@@ -22,20 +23,12 @@ void cwWavePlayFile(char* filename) {
   cwSFReadPtr = cwSFFileReadBuffer;
   
   if (FR_OK == f_open(&cwSFFile, filename, FA_OPEN_EXISTING | FA_READ)) {
-    
-    // Read ID3v2 Tag
-    char szArtist[120];
-    char szTitle[120];
-    Mp3ReadId3V2Tag(&cwSFFile, szArtist, sizeof(szArtist), szTitle, sizeof(szTitle));
-    
-    // Fill buffer
+    f_lseek(&cwSFFile, 44);
     res = f_read(&cwSFFile, cwSFFileReadBuffer, CW_FS_FILE_READ_BUFFER_SIZE, &br);
-    
-    // Play mp3
-    hMP3Decoder = MP3InitDecoder();
+
     InitializeAudio(Audio44100HzSettings);
     SetAudioVolume(0xAF);
-    PlayAudioWithCallback(AudioCallback, 0);
+    PlayAudioWithCallback(cwWaveAudioCallback, 0);
     
     for(;;) {
       /*
@@ -89,59 +82,34 @@ void cwWavePlayFile(char* filename) {
  * CODEC using DMA). One mp3 frame is decoded at a time and
  * provided to the audio driver.
  */
-void AudioCallback(void *context, int buffer) {
+void cwWaveAudioCallback(void *context, int buffer) {
   static int16_t audio_buffer0[4096];
   static int16_t audio_buffer1[4096];
+  int16_t *readPtr;
+  int byteSent;
   
-  int offset, err;
   int outOfData = 0;
   
   int16_t *samples;
   if (buffer) {
     samples = audio_buffer0;
-    GPIO_SetBits(GPIOD, GPIO_Pin_13);
-    GPIO_ResetBits(GPIOD, GPIO_Pin_14);
+    TM_DISCO_LedOn(LED_RED);
+    TM_DISCO_LedOff(LED_GREEN);
   } else {
     samples = audio_buffer1;
-    GPIO_SetBits(GPIOD, GPIO_Pin_14);
-    GPIO_ResetBits(GPIOD, GPIO_Pin_13);
+    TM_DISCO_LedOff(LED_RED);
+    TM_DISCO_LedOn(LED_GREEN);
   }
-  
-  offset = MP3FindSyncWord((unsigned char*)cwSFReadPtr, cwSFBytesLeft);
-  cwSFBytesLeft -= offset;
-  cwSFReadPtr += offset;
-  
-  err = MP3Decode(hMP3Decoder, (unsigned char**)&cwSFReadPtr, (int*)&cwSFBytesLeft, samples, 0);
-  
-  if (err) {
-    /* error occurred */
-    switch (err) {
-      case ERR_MP3_INDATA_UNDERFLOW:
-        outOfData = 1;
-        break;
-      case ERR_MP3_MAINDATA_UNDERFLOW:
-        /* do nothing - next call to decode will provide more mainData */
-        break;
-      case ERR_MP3_FREE_BITRATE_SYNC:
-      default:
-        outOfData = 1;
-        break;
-    }
-  } else {
-    // no error
-    MP3GetLastFrameInfo(hMP3Decoder, &mp3FrameInfo);
-    
-    // Duplicate data in case of mono to maintain playback speed
-    if (mp3FrameInfo.nChans == 1) {
-      for(int i = mp3FrameInfo.outputSamps;i >= 0;i--) 	{
-        samples[2 * i]=samples[i];
-        samples[2 * i + 1]=samples[i];
-      }
-      mp3FrameInfo.outputSamps *= 2;
-    }
+  readPtr = (int16_t*)cwSFReadPtr;
+  for (int i=0; i<cwSFBytesLeft/4; i++) {
+    samples[2*i] = readPtr[i];
+    samples[2*i+1] = readPtr[i];
   }
+  byteSent = cwSFBytesLeft/2;
+  cwSFBytesLeft -= byteSent;
+  cwSFReadPtr += byteSent;
   
   if (!outOfData) {
-    ProvideAudioBuffer(samples, mp3FrameInfo.outputSamps);
+    ProvideAudioBuffer(samples, byteSent);
   }
 }

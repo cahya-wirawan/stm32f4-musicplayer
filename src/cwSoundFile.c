@@ -9,6 +9,8 @@
 #include "string.h"
 #include "cwSoundFile.h"
 #include "cwMP3.h"
+#include "cwWave.h"
+#include "cwMemory.h"
 #include "tm_stm32f4_fatfs.h"
 #include "tm_stm32f4_usb_msc_host.h"
 
@@ -56,16 +58,22 @@ FRESULT cwSFPlayDirectory (const char* path, unsigned char seek) {
         
       } else { /* It is a file. */
         sprintf(buffer, "%s/%s", path, fn);
-        
+        // Skip "seek" number of mp3 files...
+        if (seek) {
+          printf("Skip file: %s\r\n", buffer);
+          seek--;
+          continue;
+        }
+        printf("Play file: %s\r\n", buffer);
         // Check if it is an mp3 file
         if ((strcmp("mp3", cwSFGetFilenameExt(buffer)) == 0) || (strcmp("MP3", cwSFGetFilenameExt(buffer)) == 0)) {
-          // Skip "seek" number of mp3 files...
-          if (seek) {
-            seek--;
-            continue;
-          }
-          
           cwMP3PlayFile(buffer);
+        }
+        else if((strcmp("wav", cwSFGetFilenameExt(buffer)) == 0) || (strcmp("WAV", cwSFGetFilenameExt(buffer)) == 0)) {
+          cwWavePlayFile(buffer);
+        }
+        else if((strcmp("mem", cwSFGetFilenameExt(buffer)) == 0) || (strcmp("MEM", cwSFGetFilenameExt(buffer)) == 0)) {
+          cwMemoryPlayFile(NULL);
         }
       }
     }
