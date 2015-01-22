@@ -1,5 +1,6 @@
 //
 //  cwMemory.c
+//  It plays sinus wave for max 5 seconds or until the push button is pushed.
 //  
 
 #include "string.h"
@@ -7,6 +8,7 @@
 #include "Audio.h"
 #include "cwSoundFile.h"
 #include "tm_stm32f4_disco.h"
+#include "tm_stm32f4_delay.h"
 
 #define f_tell(fp)		((fp)->fptr)
 #define SINWAVE_STEREO
@@ -18,24 +20,27 @@ const int16_t cwMemoryAudioSample [] =
 
 
 void cwMemoryPlayFile(char* filename) {
-  if (1) {
-    InitializeAudio(Audio44100HzSettings);
-    SetAudioVolume(0xAF);
-    PlayAudioWithCallback(cwMemoryAudioCallback, 0);
-    for(;;) {
-      if (TM_DISCO_ButtonPressed()) {
-        StopAudio();
-        
-        // Re-initialize and set volume to avoid noise
-        InitializeAudio(Audio44100HzSettings);
-        SetAudioVolume(0);
-        
-        // Wait for user button release
-        while(TM_DISCO_ButtonPressed()){};
-        
-        // Return to previous function
-        return;
-      }
+  int counter;
+  
+  counter = 0;
+  InitializeAudio(Audio44100HzSettings);
+  SetAudioVolume(0xAF);
+  PlayAudioWithCallback(cwMemoryAudioCallback, 0);
+  for(;;) {
+    Delayms(10);
+    counter++;
+    if (TM_DISCO_ButtonPressed() || counter == 500) {
+      StopAudio();
+      
+      // Re-initialize and set volume to avoid noise
+      InitializeAudio(Audio44100HzSettings);
+      SetAudioVolume(0);
+      
+      // Wait for user button release
+      while(TM_DISCO_ButtonPressed()){};
+      
+      // Return to previous function
+      return;
     }
   }
 }
