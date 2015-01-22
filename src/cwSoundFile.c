@@ -74,7 +74,7 @@ FRESULT cwSFPlayDirectory (const char* path, unsigned char seek) {
           continue;
         }
         printf("Play file: %s\r\n", buffer);
-        //printf("extension: %s\r\n", cwSFStringTolower(cwSFGetFilenameExt(buffer))));
+        
         // Check if it is an mp3 file
         if (strcasecmp("mp3", cwSFGetFilenameExt(buffer)) == 0) {
           cwMP3PlayFile(buffer);
