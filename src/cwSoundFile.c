@@ -19,6 +19,15 @@ char cwSFFileReadBuffer[CW_FS_FILE_READ_BUFFER_SIZE];
 volatile int cwSFBytesLeft;
 char *cwSFReadPtr;
 
+/*
+char *cwSFStringTolower(char *str) {
+  for(int i = 0; str[i]; i++){
+    str[i] = tolower(str[i]);
+  }
+  return str;
+}
+*/
+
 const char *cwSFGetFilenameExt(const char *filename) {
   const char *dot = strrchr(filename, '.');
   if(!dot || dot == filename) return "";
@@ -58,21 +67,22 @@ FRESULT cwSFPlayDirectory (const char* path, unsigned char seek) {
         
       } else { /* It is a file. */
         sprintf(buffer, "%s/%s", path, fn);
-        // Skip "seek" number of mp3 files...
-        if (seek) {
+        // Skip "seek" number of mp3 files and ignore file with a starting char '.'
+        if (seek || !strncasecmp("1:/.", buffer, 4)) {
           printf("Skip file: %s\r\n", buffer);
           seek--;
           continue;
         }
         printf("Play file: %s\r\n", buffer);
+        //printf("extension: %s\r\n", cwSFStringTolower(cwSFGetFilenameExt(buffer))));
         // Check if it is an mp3 file
-        if ((strcmp("mp3", cwSFGetFilenameExt(buffer)) == 0) || (strcmp("MP3", cwSFGetFilenameExt(buffer)) == 0)) {
+        if (strcasecmp("mp3", cwSFGetFilenameExt(buffer)) == 0) {
           cwMP3PlayFile(buffer);
         }
-        else if((strcmp("wav", cwSFGetFilenameExt(buffer)) == 0) || (strcmp("WAV", cwSFGetFilenameExt(buffer)) == 0)) {
+        else if(strcasecmp("wav", cwSFGetFilenameExt(buffer)) == 0) {
           cwWavePlayFile(buffer);
         }
-        else if((strcmp("mem", cwSFGetFilenameExt(buffer)) == 0) || (strcmp("MEM", cwSFGetFilenameExt(buffer)) == 0)) {
+        else if(strcasecmp("mem", cwSFGetFilenameExt(buffer)) == 0) {
           cwMemoryPlayFile(NULL);
         }
       }

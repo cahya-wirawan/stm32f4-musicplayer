@@ -26,9 +26,7 @@ void cwMP3PlayFile(char* filename) {
   
   cwSFBytesLeft = CW_FS_FILE_READ_BUFFER_SIZE;
   cwSFReadPtr = cwSFFileReadBuffer;
-  
   if (FR_OK == f_open(&cwSFFile, filename, FA_OPEN_EXISTING | FA_READ)) {
-
     // Read ID3v2 Tag
     char szArtist[120];
     char szTitle[120];
@@ -41,7 +39,7 @@ void cwMP3PlayFile(char* filename) {
     hMP3Decoder = MP3InitDecoder();
     InitializeAudio(Audio44100HzSettings);
     SetAudioVolume(0xAF);
-    PlayAudioWithCallback(AudioCallback, 0);
+    PlayAudioWithCallback(cwMP3AudioCallback, 0);
     
     for(;;) {
       /*
@@ -95,7 +93,7 @@ void cwMP3PlayFile(char* filename) {
  * CODEC using DMA). One mp3 frame is decoded at a time and
  * provided to the audio driver.
  */
-void AudioCallback(void *context, int buffer) {
+void cwMP3AudioCallback(void *context, int buffer) {
   static int16_t audio_buffer0[4096];
   static int16_t audio_buffer1[4096];
   
@@ -105,12 +103,12 @@ void AudioCallback(void *context, int buffer) {
   int16_t *samples;
   if (buffer) {
     samples = audio_buffer0;
-    GPIO_SetBits(GPIOD, GPIO_Pin_13);
-    GPIO_ResetBits(GPIOD, GPIO_Pin_14);
+    TM_DISCO_LedOn(LED_RED);
+    TM_DISCO_LedOff(LED_GREEN);
   } else {
     samples = audio_buffer1;
-    GPIO_SetBits(GPIOD, GPIO_Pin_14);
-    GPIO_ResetBits(GPIOD, GPIO_Pin_13);
+    TM_DISCO_LedOff(LED_RED);
+    TM_DISCO_LedOn(LED_GREEN);
   }
   
   offset = MP3FindSyncWord((unsigned char*)cwSFReadPtr, cwSFBytesLeft);

@@ -12,7 +12,7 @@
 #include "Audio.h"
 #include "ff.h"
 
-void cwMemoryAudioCallback(void *context,int buffer);
 void cwMemoryPlayFile(char* filename);
+void cwMemoryAudioCallback(void *context,int buffer);
 
 #endif /* defined(__CW_MEMORY__) */

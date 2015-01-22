@@ -15,6 +15,7 @@
 
 #define   CW_FS_FILE_READ_BUFFER_SIZE 8192
 
+//char *cwSFStringTolower(char *str);
 const char *cwSFGetFilenameExt(const char *filename);
 FRESULT cwSFPlayDirectory (const char* path, unsigned char seek);
 

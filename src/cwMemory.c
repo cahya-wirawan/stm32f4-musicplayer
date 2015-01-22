@@ -9,7 +9,7 @@
 #include "tm_stm32f4_disco.h"
 
 #define f_tell(fp)		((fp)->fptr)
-//#define SINWAVE_STEREO
+#define SINWAVE_STEREO
 
 const int16_t cwMemoryAudioSample [] =
 {
