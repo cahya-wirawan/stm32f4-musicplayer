@@ -19,15 +19,6 @@ char cwSFFileReadBuffer[CW_FS_FILE_READ_BUFFER_SIZE];
 volatile int cwSFBytesLeft;
 char *cwSFReadPtr;
 
-/*
-char *cwSFStringTolower(char *str) {
-  for(int i = 0; str[i]; i++){
-    str[i] = tolower(str[i]);
-  }
-  return str;
-}
-*/
-
 const char *cwSFGetFilenameExt(const char *filename) {
   const char *dot = strrchr(filename, '.');
   if(!dot || dot == filename) return "";
