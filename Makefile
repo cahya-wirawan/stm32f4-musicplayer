@@ -71,7 +71,7 @@ proj: 	$(OUTPATH)/$(PROJ_NAME).elf
 
 $(OUTPATH)/$(PROJ_NAME).elf: $(SRCS)
 	mkdir -p $(OUTPATH)
-	$(CC) $(CFLAGS) $^ -o $@ -Llib -lfatfs -lstm32f4-tm -lusbmschost -lstm32f4 -lhelix -lm
+	$(CC) $(CFLAGS) $^ -o $@ -Llib -lfatfs -lstm32f4-tm -lusbmschost -lstm32f4 -lhelix -lm -Wl,--gc-sections
 	$(OBJCOPY) -O ihex $(OUTPATH)/$(PROJ_NAME).elf $(OUTPATH)/$(PROJ_NAME).hex
 	$(OBJCOPY) -O binary $(OUTPATH)/$(PROJ_NAME).elf $(OUTPATH)/$(PROJ_NAME).bin
 

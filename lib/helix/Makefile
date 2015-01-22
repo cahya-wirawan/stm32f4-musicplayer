@@ -19,6 +19,8 @@ vpath %.c real
 
 CFLAGS  = -g -O2 -Wall
 CFLAGS += -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4
+CFLAGS += -DSTM32F40_41xxx -DUSE_STDPERIPH_DRIVER -DHSE_VALUE='((uint32_t)8000000)'
+CFLAGS += -fdata-sections -ffunction-sections
 
 ifeq ($(FLOAT_TYPE), hard)
 CFLAGS += -fsingle-precision-constant -Wdouble-promotion
